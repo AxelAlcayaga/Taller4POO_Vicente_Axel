@@ -2,25 +2,21 @@ package logica;
 
 import dominio.Administrador;
 import dominio.Coordinador;
-import dominio.Estudiante;
 import dominio.Usuario;
 
 public class UsuarioFactory {
 
-	public static Usuario crearUsuario(String tipo, String nombreUsuario, String contraseña, String rut, String carrera,
-			int semestre, String correo, String area) {
+	public static Usuario crearUsuario(String nombreUsuario, String contraseña, String rol, String adicional) {
 
-		tipo = tipo.toUpperCase();
+		rol = rol.toUpperCase();
 
-		switch (tipo) {
-		case "ADMINISTRADOR":
+		switch (rol) {
+		case "ADMIN":
 			return new Administrador(nombreUsuario, contraseña);
 		case "COORDINADOR":
-			return new Coordinador(nombreUsuario, contraseña, area);
-		case "ESTUDIANTE":
-			return new Estudiante(nombreUsuario, contraseña, rut, carrera, semestre, correo);
+			return new Coordinador(nombreUsuario, contraseña, adicional);
 		default:
-			System.out.println("Tipo de usuario desconocido" + tipo);
+			System.out.println("Tipo de usuario desconocido" + rol);
 			return null;
 
 		}

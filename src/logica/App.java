@@ -1,16 +1,17 @@
 package logica;
 
-import dominio.Sistema;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
+import presentacion.LoginFrame;
 
 public class App {
-	
-	private static Sistema sistema;
-	
 
+	public static void main(String[] args) throws FileNotFoundException {
 
-	public static void main(String[] args) {
-		
-		System.out.println("Sistema: ");
+		Sistema.getInstancia().cargarDatos();
+		new LoginFrame();
+
 	}
 
 }

@@ -1,5 +1,6 @@
 package logica;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import dominio.Certificacion;
@@ -13,7 +14,7 @@ public interface ISistema {
 	
 	Usuario iniciarSesion(String nombreUsuario, String contraseña);
 	
-	void cargarDatos();
+	void cargarDatos() throws FileNotFoundException;
 	ArrayList<Curso> listarCurso();
 	ArrayList<Certificacion> listarCertificaciones(); 
 	ArrayList<RegistroCertificacion> getRegistrosPorEstudiante(String rut);
