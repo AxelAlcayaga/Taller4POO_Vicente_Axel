@@ -11,23 +11,36 @@ import dominio.RegistroCertificacion;
 import dominio.Usuario;
 
 public interface ISistema {
-	
+
 	Usuario iniciarSesion(String nombreUsuario, String contraseña);
-	
+
 	void cargarDatos() throws FileNotFoundException;
+
 	ArrayList<Curso> listarCurso();
-	ArrayList<Certificacion> listarCertificaciones(); 
+
+	ArrayList<Certificacion> listarCertificaciones();
+
 	ArrayList<RegistroCertificacion> getRegistrosPorEstudiante(String rut);
+
 	ArrayList<Nota> getNotasPorEstudiante(String rut);
+
 	ArrayList<Estudiante> getEstudiantes();
+
 	String generarReporteProgresoEstudiante(String rut);
 
-	
+	ArrayList<Estudiante> listarEstudiantes();
+
+	void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion);
+
 	double calcularPromedioGeneral(String rut);
+
 	double calcularPromedioPorSemestre(String rut);
+
 	void inscribirEstudianteEnCertitifacion(String rut, String idCertificacion);
-	
+
 	void agregarUsuario(Usuario u);
+
 	void eliminarUsuario(String nombreUsuario);
+
 	void cambiarContraseña(String nombreUsuario, String nuevaContraseña);
 }

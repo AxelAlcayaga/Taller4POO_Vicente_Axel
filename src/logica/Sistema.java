@@ -35,6 +35,7 @@ public class Sistema implements ISistema {
 		notas = new ArrayList<>();
 		asignaturasCertificacion = new ArrayList<>();
 		estrategiaPromedio = new EstrategiaPromedioGeneral();
+		estudiantes = new ArrayList<>();
 	}
 
 	private static Sistema instancia;
@@ -208,8 +209,7 @@ public class Sistema implements ISistema {
 
 	@Override
 	public ArrayList<Certificacion> listarCertificaciones() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<>(certificaciones);
 	}
 
 	@Override
@@ -296,6 +296,22 @@ public class Sistema implements ISistema {
 		}
 
 		return visitor.getReporte();
+	}
+
+	@Override
+	public ArrayList<Estudiante> listarEstudiantes() {
+		return new ArrayList<>(estudiantes);
+	}
+
+	@Override
+	public void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion) {
+		String fechaHoy = java.time.LocalDate.now().toString();
+
+		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0);
+
+		registros.add(reg);
+
+		System.out.println("Estudiante " + rutEstudiante + " inscrito en certificación " + idCertificacion);
 	}
 
 }

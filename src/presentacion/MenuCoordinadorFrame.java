@@ -2,8 +2,11 @@ package presentacion;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 import dominio.Coordinador;
+import dominio.Certificacion;
+import dominio.Estudiante;
 import logica.ISistema;
 import logica.Sistema;
 
@@ -12,84 +15,107 @@ public class MenuCoordinadorFrame extends JFrame {
 	private Coordinador coordinador;
 	private ISistema sistema;
 
+	private JComboBox<String> comboEstudiantes;
+	private JComboBox<String> comboCertificaciones;
+	private JTextArea areaMensajes;
+
+	private ArrayList<Estudiante> listaEstudiantes;
+	private ArrayList<Certificacion> listaCertificaciones;
+
 	public MenuCoordinadorFrame(Coordinador coordinador) {
 		super("AcademiCore - Coordinador");
 		this.coordinador = coordinador;
 		this.sistema = Sistema.getInstancia();
 
-		setSize(600, 400);
+		setSize(650, 400);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		JTabbedPane tabs = new JTabbedPane();
-		tabs.addTab("Certificaciones", crearPanelCertificaciones());
-		tabs.addTab("Métricas", crearPanelMetricas());
-		tabs.addTab("Inscripción", crearPanelInscripcion());
-		tabs.addTab("Progreso", crearPanelProgreso());
+		tabs.addTab("Resumen", crearPanelResumen());
+		tabs.addTab("Inscribir estudiante", crearPanelInscripcion());
 
 		add(tabs);
 		setVisible(true);
 	}
 
-	private JPanel crearPanelCertificaciones() {
-		JPanel p = new JPanel(new BorderLayout());
-		JTextArea area = new JTextArea("Aquí puedes:\n" + "- Modificar línea de certificación\n"
-				+ "- Generar certificados para estudiantes completados\n\n"
-				+ "(GUI lista, falta conectar lógica real en Sistema)");
-		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
-		return p;
-	}
+	private JPanel crearPanelResumen() {
+		JPanel p = new JPanel();
+		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+		p.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-	private JPanel crearPanelMetricas() {
-		JPanel p = new JPanel(new BorderLayout());
-		JTextArea area = new JTextArea("Panel de Métricas y Análisis:\n"
-				+ "- Aquí podrías mostrar cantidad de estudiantes por certificación,\n"
-				+ "  tasas de aprobación, etc.\n\n" + "(TODO: llenar usando datos reales de Sistema)");
-		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		JLabel lbl1 = new JLabel("Usuario: " + coordinador.getNombreUsuario());
+		JLabel lbl2 = new JLabel("Rol: Coordinador");
+
+		lbl1.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lbl2.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		p.add(lbl1);
+		p.add(Box.createVerticalStrut(10));
+		p.add(lbl2);
+
 		return p;
 	}
 
 	private JPanel crearPanelInscripcion() {
-		JPanel p = new JPanel(new BorderLayout());
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JTextArea info = new JTextArea("Inscripción a certificaciones:\n" + "- Listar líneas disponibles\n"
-				+ "- Mostrar requisitos y descripción\n" + "- Inscribir estudiante validando prerrequisitos\n");
-		info.setEditable(false);
+		JPanel panelSuperior = new JPanel(new GridLayout(2, 2, 5, 5));
 
-		JPanel abajo = new JPanel(new GridLayout(3, 2, 5, 5));
-		JTextField txtRut = new JTextField();
-		JTextField txtIdCert = new JTextField();
-		JButton btnInscribir = new JButton("Inscribir");
+		comboEstudiantes = new JComboBox<>();
+		comboCertificaciones = new JComboBox<>();
 
-		abajo.add(new JLabel("RUT estudiante:"));
-		abajo.add(txtRut);
-		abajo.add(new JLabel("ID certificación:"));
-		abajo.add(txtIdCert);
-		abajo.add(new JLabel());
-		abajo.add(btnInscribir);
+		listaEstudiantes = sistema.listarEstudiantes();
+		listaCertificaciones = sistema.listarCertificaciones();
 
-		btnInscribir.addActionListener(e -> {
-			String rut = txtRut.getText();
-			String id = txtIdCert.getText();
-			sistema.inscribirEstudianteEnCertitifacion(rut, id);
-			JOptionPane.showMessageDialog(this, "Inscripción registrada (falta validar prerrequisitos en la lógica).");
-		});
+		for (Estudiante e : listaEstudiantes) {
+			comboEstudiantes.addItem(e.getRut() + " - " + e.getNombreUsuario());
+		}
 
-		p.add(new JScrollPane(info), BorderLayout.CENTER);
-		p.add(abajo, BorderLayout.SOUTH);
+		for (Certificacion c : listaCertificaciones) {
+			comboCertificaciones.addItem(c.getIdCertificacion() + " - " + c.getNombreCertificacion());
+		}
+
+		panelSuperior.add(new JLabel("Estudiante (RUT - usuario):"));
+		panelSuperior.add(comboEstudiantes);
+		panelSuperior.add(new JLabel("Certificación:"));
+		panelSuperior.add(comboCertificaciones);
+
+		p.add(panelSuperior, BorderLayout.NORTH);
+
+		areaMensajes = new JTextArea();
+		areaMensajes.setEditable(false);
+		p.add(new JScrollPane(areaMensajes), BorderLayout.CENTER);
+
+		JButton btnInscribir = new JButton("Inscribir estudiante en certificación");
+		p.add(btnInscribir, BorderLayout.SOUTH);
+
+		btnInscribir.addActionListener(e -> inscribirSeleccion());
+
 		return p;
 	}
 
-	private JPanel crearPanelProgreso() {
-		JPanel p = new JPanel(new BorderLayout());
-		JTextArea area = new JTextArea("Seguimiento de Progreso:\n"
-				+ "- Aquí se puede usar Visitor para distintas acciones según tipo de certificación\n"
-				+ "- Mostrar progreso y asignaturas pendientes\n\n"
-				+ "(GUI lista; Visitor/logic en Sistema todavía por implementar.)");
-		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
-		return p;
+	private void inscribirSeleccion() {
+		int idxEst = comboEstudiantes.getSelectedIndex();
+		int idxCert = comboCertificaciones.getSelectedIndex();
+
+		if (idxEst < 0 || idxCert < 0) {
+			JOptionPane.showMessageDialog(this, "Debe seleccionar un estudiante y una certificación.", "Mensaje",
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		Estudiante est = listaEstudiantes.get(idxEst);
+		Certificacion cert = listaCertificaciones.get(idxCert);
+
+		sistema.inscribirEstudianteEnCertificacion(est.getRut(), cert.getIdCertificacion());
+
+		String msg = "Estudiante " + est.getRut() + " inscrito en " + cert.getNombreCertificacion() + "\n";
+
+		areaMensajes.append(msg);
+
+		JOptionPane.showMessageDialog(this, "Inscripción realizada correctamente.", "Mensaje",
+				JOptionPane.INFORMATION_MESSAGE);
 	}
 }
