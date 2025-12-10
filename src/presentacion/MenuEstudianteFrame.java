@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import dominio.Estudiante;
 import dominio.Nota;
-
 import logica.ISistema;
 import logica.Sistema;
 
@@ -17,71 +16,75 @@ public class MenuEstudianteFrame extends JFrame {
 
     public MenuEstudianteFrame(Estudiante estudiante) {
         super("AcademiCore - Estudiante");
-
         this.estudiante = estudiante;
         this.sistema = Sistema.getInstancia();
 
-        setSize(450, 300);
+        setSize(500, 350);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10));
 
-        JLabel lbl = new JLabel("Bienvenido " + estudiante.getNombreUsuario(), SwingConstants.CENTER);
-        lbl.setFont(new Font("Arial", Font.BOLD, 18));
-        add(lbl, BorderLayout.NORTH);
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("Datos", crearPanelDatos());
+        tabs.addTab("Notas", crearPanelNotas());
+        tabs.addTab("Promedio", crearPanelPromedio());
 
-        JPanel info = new JPanel(new GridLayout(3, 1));
-        info.add(new JLabel("RUT: " + estudiante.getRut()));
-        info.add(new JLabel("Carrera: " + estudiante.getCarrera()));
-        info.add(new JLabel("Semestre: " + estudiante.getSemestre()));
-        add(info, BorderLayout.CENTER);
-
-        JPanel botones = new JPanel(new FlowLayout());
-
-        JButton btnNotas = new JButton("Ver notas");
-        JButton btnProm = new JButton("Ver promedio");
-        JButton btnSalir = new JButton("Salir");
-
-        botones.add(btnNotas);
-        botones.add(btnProm);
-        botones.add(btnSalir);
-
-        add(botones, BorderLayout.SOUTH);
-
-        btnNotas.addActionListener(e -> mostrarNotas());
-
-        btnProm.addActionListener(e -> {
-            double promedio = sistema.calcularPromedioGeneral(estudiante.getRut());
-            JOptionPane.showMessageDialog(this, "Tu promedio es: " + promedio);
-        });
-
-        btnSalir.addActionListener(e -> {
-            dispose();
-            new LoginFrame();
-        });
-
+        add(tabs);
         setVisible(true);
     }
 
-    private void mostrarNotas() {
-        ArrayList<Nota> notas = sistema.getNotasPorEstudiante(estudiante.getRut());
+    private JPanel crearPanelDatos() {
+        JPanel p = new JPanel(new GridLayout(3, 1));
+        p.add(new JLabel("Usuario: " + estudiante.getNombreUsuario()));
+        p.add(new JLabel("RUT: " + estudiante.getRut()));
+        p.add(new JLabel("Carrera: " + estudiante.getCarrera()
+                         + " | Semestre: " + estudiante.getSemestre()));
+        return p;
+    }
 
-        if (notas.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No tienes notas registradas.");
-            return;
-        }
+    private JPanel crearPanelNotas() {
+        JPanel p = new JPanel(new BorderLayout());
+        JTextArea area = new JTextArea();
+        area.setEditable(false);
+        p.add(new JScrollPane(area), BorderLayout.CENTER);
 
-        StringBuilder sb = new StringBuilder();
-        for (Nota n : notas) {
-            sb.append("Asignatura: ").append(n.getCodigoAsignatura())
-              .append(" | Nota: ").append(n.getCalificacion())
-              .append(" | Estado: ").append(n.getEstado()).append("\n");
-        }
+        JButton btnCargar = new JButton("Cargar notas");
+        p.add(btnCargar, BorderLayout.SOUTH);
 
-        JTextArea txt = new JTextArea(sb.toString());
-        txt.setEditable(false);
+        btnCargar.addActionListener(e -> {
+            ArrayList<Nota> notas = sistema.getNotasPorEstudiante(estudiante.getRut());
+            if (notas.isEmpty()) {
+                area.setText("No hay notas registradas.");
+                return;
+            }
 
-        JScrollPane panel = new JScrollPane(txt);
-        JOptionPane.showMessageDialog(this, panel, "Notas", JOptionPane.INFORMATION_MESSAGE);
+            StringBuilder sb = new StringBuilder();
+            for (Nota n : notas) {
+                sb.append("Asignatura: ").append(n.getCodigoAsignatura())
+                  .append(" | Nota: ").append(n.getCalificacion())
+                  .append(" | Estado: ").append(n.getEstado())
+                  .append("\n");
+            }
+            area.setText(sb.toString());
+        });
+
+        return p;
+    }
+
+    private JPanel crearPanelPromedio() {
+        JPanel p = new JPanel(new BorderLayout());
+
+        JLabel lbl = new JLabel("Promedio general: ", SwingConstants.CENTER);
+        lbl.setFont(new Font("Arial", Font.BOLD, 18));
+        p.add(lbl, BorderLayout.CENTER);
+
+        JButton btnCalcular = new JButton("Calcular");
+        p.add(btnCalcular, BorderLayout.SOUTH);
+
+        btnCalcular.addActionListener(e -> {
+            double prom = sistema.calcularPromedioGeneral(estudiante.getRut());
+            lbl.setText("Promedio general: " + prom);
+        });
+
+        return p;
     }
 }
