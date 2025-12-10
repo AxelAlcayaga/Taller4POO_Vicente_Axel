@@ -52,7 +52,6 @@ public class Sistema implements ISistema {
 		cargarNotas();
 		cargarRegistros();
 		cargarAsignaturasCertificacion();
-
 	}
 
 	private void cargarEstudiantes() throws FileNotFoundException {
@@ -62,13 +61,12 @@ public class Sistema implements ISistema {
 			String linea = s.nextLine();
 			String[] partes = linea.split(";");
 			String rut = partes[0];
-			// String nombre = partes[1];
+			String nombre = partes[1];
 			String carrera = partes[2];
 			int semestre = Integer.parseInt(partes[3]);
 			String correo = partes[4];
 			String contraseña = partes[5];
-			String nombreUsuario = rut;
-			Estudiante e = new Estudiante(nombreUsuario, contraseña, rut, carrera, semestre, correo);
+			Estudiante e = new Estudiante(correo, contraseña, rut, carrera, semestre, correo);
 			usuarios.add(e);
 
 		}
@@ -91,27 +89,27 @@ public class Sistema implements ISistema {
 	}
 
 	private void cargarNotas() throws FileNotFoundException {
-	    File f = new File("notas.txt");
-	    Scanner s = new Scanner(f);
+		File f = new File("notas.txt");
+		Scanner s = new Scanner(f);
 
-	    while (s.hasNextLine()) {
-	        String linea = s.nextLine().trim();
-	        if (linea.isEmpty()) continue;
+		while (s.hasNextLine()) {
+			String linea = s.nextLine().trim();
+			if (linea.isEmpty())
+				continue;
 
-	        String[] partes = linea.split(";");
+			String[] partes = linea.split(";");
 
-	        String rut = partes[0];
-	        String codigoAsignatura = partes[1];
-	        String semestre = partes[2];
-	        double notaObtenida = Double.parseDouble(partes[3]);
+			String rut = partes[0];
+			String codigoAsignatura = partes[1];
+			double notaObtenida = Double.parseDouble(partes[2]);
+			String estado = partes[3];
+			String semestre = partes[4];
 
-	        String estado = partes[4];
+			Nota n = new Nota(rut, codigoAsignatura, notaObtenida, estado, semestre);
+			notas.add(n);
+		}
 
-	        Nota n = new Nota(rut, codigoAsignatura, semestre, notaObtenida, estado);
-	        notas.add(n);
-	    }
-
-	    s.close();
+		s.close();
 	}
 
 
@@ -142,11 +140,11 @@ public class Sistema implements ISistema {
 	@Override
 	public Usuario iniciarSesion(String nombreUsuario, String contraseña) {
 		for (Usuario u : usuarios) {
-			if (u.getNombreUsuario().equals(nombreUsuario) && u.getContraseña().equals(contraseña)) {
+			if (u != null && u.getNombreUsuario().equals(nombreUsuario) && u.getContraseña().equals(contraseña)) {
 				return u;
 			}
 		}
-		return null; // si no lo encuentra
+		return null;
 	}
 
 	@Override
