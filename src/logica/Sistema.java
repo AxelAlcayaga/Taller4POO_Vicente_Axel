@@ -8,7 +8,6 @@ import java.util.Scanner;
 import dominio.AsignaturaCertificacion;
 import dominio.Certificacion;
 import dominio.Curso;
-import dominio.EstrategiaCalculoPromedio;
 import dominio.Estudiante;
 import dominio.Nota;
 import dominio.RegistroCertificacion;
@@ -32,7 +31,7 @@ public class Sistema implements ISistema {
 		registros = new ArrayList<>();
 		notas = new ArrayList<>();
 		asignaturasCertificacion = new ArrayList<>();
-		estrategiaPromedio = new EstrategiaCalculoPromedio();
+		estrategiaPromedio = new EstrategiaPromedioGeneral();
 	}
 
 	private static Sistema instancia;
@@ -74,7 +73,6 @@ public class Sistema implements ISistema {
 
 		}
 		s.close();
-		System.out.println("Estudiantes cargados: " + usuarios.size());
 
 	}
 
@@ -92,10 +90,30 @@ public class Sistema implements ISistema {
 
 	}
 
-	private void cargarNotas() {
-		// TODO Auto-generated method stub
+	private void cargarNotas() throws FileNotFoundException {
+	    File f = new File("notas.txt");
+	    Scanner s = new Scanner(f);
 
+	    while (s.hasNextLine()) {
+	        String linea = s.nextLine().trim();
+	        if (linea.isEmpty()) continue;
+
+	        String[] partes = linea.split(";");
+
+	        String rut = partes[0];
+	        String codigoAsignatura = partes[1];
+	        String semestre = partes[2];
+	        double notaObtenida = Double.parseDouble(partes[3]);
+
+	        String estado = partes[4];
+
+	        Nota n = new Nota(rut, codigoAsignatura, semestre, notaObtenida, estado);
+	        notas.add(n);
+	    }
+
+	    s.close();
 	}
+
 
 	private void cargarCertificaciones() {
 		// TODO Auto-generated method stub
@@ -121,18 +139,15 @@ public class Sistema implements ISistema {
 		s.close();
 	}
 
-	
 	@Override
 	public Usuario iniciarSesion(String nombreUsuario, String contraseña) {
-	    for (Usuario u : usuarios) {
-	        if (u.getNombreUsuario().equals(nombreUsuario) &&
-	            u.getContraseña().equals(contraseña)) {
-	            return u;
-	        }
-	    }
-	    return null; // si no lo encuentra
+		for (Usuario u : usuarios) {
+			if (u.getNombreUsuario().equals(nombreUsuario) && u.getContraseña().equals(contraseña)) {
+				return u;
+			}
+		}
+		return null; // si no lo encuentra
 	}
-
 
 	@Override
 	public ArrayList<Curso> listarCurso() {
@@ -154,14 +169,21 @@ public class Sistema implements ISistema {
 
 	@Override
 	public ArrayList<Nota> getNotasPorEstudiante(String rut) {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<Nota> resultado = new ArrayList<>();
+
+		for (Nota n : notas) {
+			if (n.getRutEstudiante().equals(rut)) {
+				resultado.add(n);
+			}
+		}
+		return resultado;
 	}
 
 	@Override
 	public double calcularPromedioGeneral(String rut) {
-		// TODO Auto-generated method stub
-		return 0;
+		ArrayList<Nota> notasEstudiante = getNotasPorEstudiante(rut);
+		estrategiaPromedio = new EstrategiaPromedioGeneral();
+		return estrategiaPromedio.calcular(notasEstudiante);
 	}
 
 	@Override

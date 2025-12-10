@@ -32,7 +32,6 @@ public class LoginFrame extends JFrame {
 		JButton btnLogin = new JButton("Iniciar Sesión");
 		add(btnLogin);
 
-		// Evento del botón
 		btnLogin.addActionListener(e -> iniciarSesion());
 
 		setVisible(true);
@@ -49,7 +48,7 @@ public class LoginFrame extends JFrame {
 			return;
 		}
 
-		// según el rol
+
 		if (u.esAdministrador()) {
 			new MenuAdminFrame((Administrador) u);
 		} else if (u.esCoordinador()) {
@@ -58,6 +57,6 @@ public class LoginFrame extends JFrame {
 			new MenuEstudianteFrame((Estudiante) u);
 		}
 
-		dispose(); // cerramos el login
+		dispose();
 	}
 }

@@ -2,59 +2,25 @@ package dominio;
 
 public class Nota {
 
-	private String rutEstudiante;
-	private String codigoAsignatura;
-	private double calificacion;
-	private String estado;
-	private String semestre;
+    private String rutEstudiante;
+    private String codigoAsignatura;
+    private String semestre;
+    private double calificacion;
+    private String estado;
 
-	public Nota(String rutEstudiante, String codigoAsignatura, double calificacion, String estado, String semestre) {
-		super();
-		this.rutEstudiante = rutEstudiante;
-		this.codigoAsignatura = codigoAsignatura;
-		this.calificacion = calificacion;
-		this.estado = estado;
-		this.semestre = semestre;
-	}
+    public Nota(String rutEstudiante, String codigoAsignatura,
+                String semestre, double calificacion, String estado) {
+        this.rutEstudiante = rutEstudiante;
+        this.codigoAsignatura = codigoAsignatura;
+        this.semestre = semestre;
+        this.calificacion = calificacion;
+        this.estado = estado;
+    }
 
-	public String getRutEstudiante() {
-		return rutEstudiante;
-	}
-
-	public void setRutEstudiante(String rutEstudiante) {
-		this.rutEstudiante = rutEstudiante;
-	}
-
-	public String getCodigoAsignatura() {
-		return codigoAsignatura;
-	}
-
-	public void setCodigoAsignatura(String codigoAsignatura) {
-		this.codigoAsignatura = codigoAsignatura;
-	}
-
-	public double getCalificacion() {
-		return calificacion;
-	}
-
-	public void setCalificacion(double calificacion) {
-		this.calificacion = calificacion;
-	}
-
-	public String getEstado() {
-		return estado;
-	}
-
-	public void setEstado(String estado) {
-		this.estado = estado;
-	}
-
-	public String getSemestre() {
-		return semestre;
-	}
-
-	public void setSemestre(String semestre) {
-		this.semestre = semestre;
-	}
-
+    public String getRutEstudiante() { return rutEstudiante; }
+    public String getCodigoAsignatura() { return codigoAsignatura; }
+    public String getSemestre() { return semestre; }
+    public double getCalificacion() { return calificacion; }
+    public String getEstado() { return estado; }
 }
+
