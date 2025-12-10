@@ -112,7 +112,6 @@ public class Sistema implements ISistema {
 		s.close();
 	}
 
-
 	private void cargarCertificaciones() {
 		// TODO Auto-generated method stub
 
