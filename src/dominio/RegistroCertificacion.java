@@ -4,18 +4,18 @@ public class RegistroCertificacion {
 
 	private String rutEstudiante;
 	private String idCertificacion;
-	private String fechaRegistro;
+	private String fecha;
 	private String estado;
-	private double progreso;
+	private int avance;
 
-	public RegistroCertificacion(String rutEstudiante, String idCertificacion, String fechaRegistro, String estado,
-			double progreso) {
+	public RegistroCertificacion(String rutEstudiante, String idCertificacion, String fecha, String estado,
+			int avance) {
 		super();
 		this.rutEstudiante = rutEstudiante;
 		this.idCertificacion = idCertificacion;
-		this.fechaRegistro = fechaRegistro;
+		this.fecha = fecha;
 		this.estado = estado;
-		this.progreso = progreso;
+		this.avance = avance;
 	}
 
 	public String getRutEstudiante() {
@@ -34,12 +34,12 @@ public class RegistroCertificacion {
 		this.idCertificacion = idCertificacion;
 	}
 
-	public String getFechaRegistro() {
-		return fechaRegistro;
+	public String getFecha() {
+		return fecha;
 	}
 
-	public void setFechaRegistro(String fechaRegistro) {
-		this.fechaRegistro = fechaRegistro;
+	public void setFecha(String fecha) {
+		this.fecha = fecha;
 	}
 
 	public String getEstado() {
@@ -50,12 +50,12 @@ public class RegistroCertificacion {
 		this.estado = estado;
 	}
 
-	public double getProgreso() {
-		return progreso;
+	public int getAvance() {
+		return avance;
 	}
 
-	public void setProgreso(double progreso) {
-		this.progreso = progreso;
+	public void setAvance(int avance) {
+		this.avance = avance;
 	}
 
 }

@@ -2,7 +2,7 @@ package dominio;
 
 import logica.CertificacionVisitor;
 
-public class CertificacionSistemasInteligentes extends Certificacion{
+public class CertificacionSistemasInteligentes extends Certificacion {
 
 	public CertificacionSistemasInteligentes(String id, String nombre, String descripcion, int creditosMinimos,
 			int añosValidez) {
@@ -13,7 +13,5 @@ public class CertificacionSistemasInteligentes extends Certificacion{
 	public void accept(CertificacionVisitor visitor) {
 		visitor.visitar(this);
 	}
-
-		
 
 }

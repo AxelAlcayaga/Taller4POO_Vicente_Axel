@@ -7,6 +7,9 @@ import java.util.Scanner;
 
 import dominio.AsignaturaCertificacion;
 import dominio.Certificacion;
+import dominio.CertificacionCiberseguridad;
+import dominio.CertificacionDesarrolloSoftware;
+import dominio.CertificacionSistemasInteligentes;
 import dominio.Curso;
 import dominio.Estudiante;
 import dominio.Nota;
@@ -78,9 +81,65 @@ public class Sistema implements ISistema {
 
 	}
 
-	private void cargarRegistros() {
-		// TODO Auto-generated method stub
+	private void cargarCertificaciones() throws FileNotFoundException {
+		File f = new File("certificaciones.txt");
+		Scanner s = new Scanner(f, "UTF-8");
 
+		while (s.hasNextLine()) {
+			String linea = s.nextLine().trim();
+			if (linea.isEmpty())
+				continue;
+
+			String[] partes = linea.split(";");
+
+			String id = partes[0];
+			String nombre = partes[1];
+			String descripcion = partes[2];
+			int creditosMinimos = Integer.parseInt(partes[3]);
+			int añosValidez = Integer.parseInt(partes[4]);
+
+			Certificacion c = crearCertificacionDesdeTxt(id, nombre, descripcion, creditosMinimos, añosValidez);
+			certificaciones.add(c);
+		}
+
+		s.close();
+	}
+
+	private Certificacion crearCertificacionDesdeTxt(String id, String nombre, String descripcion, int creditosMinimos,
+			int añosValidez) {
+
+		switch (id) {
+		case "CERT-001":
+			return new CertificacionSistemasInteligentes(id, nombre, descripcion, creditosMinimos, añosValidez);
+
+		case "CERT-002":
+			return new CertificacionCiberseguridad(id, nombre, descripcion, creditosMinimos, añosValidez);
+
+		case "CERT-003":
+			return new CertificacionDesarrolloSoftware(id, nombre, descripcion, creditosMinimos, añosValidez);
+
+		default:
+			return new CertificacionSistemasInteligentes(id, nombre, descripcion, creditosMinimos, añosValidez);
+		}
+	}
+
+	private void cargarRegistros() throws FileNotFoundException {
+		File f = new File("registros.txt");
+		Scanner s = new Scanner(f);
+		while (s.hasNextLine()) {
+			String linea = s.nextLine().trim();
+			if (linea.isEmpty())
+				continue;
+			String[] partes = linea.split(";");
+			String rut = partes[0];
+			String idCert = partes[1];
+			String fecha = partes[2];
+			String estado = partes[3];
+			int avance = Integer.parseInt(partes[4]);
+			RegistroCertificacion r = new RegistroCertificacion(rut, fecha, idCert, estado, avance);
+			registros.add(r);
+		}
+		s.close();
 	}
 
 	private void cargarCursos() {
@@ -110,11 +169,6 @@ public class Sistema implements ISistema {
 		}
 
 		s.close();
-	}
-
-	private void cargarCertificaciones() {
-		// TODO Auto-generated method stub
-
 	}
 
 	private void cargarUsuarios() throws FileNotFoundException {
@@ -160,8 +214,15 @@ public class Sistema implements ISistema {
 
 	@Override
 	public ArrayList<RegistroCertificacion> getRegistrosPorEstudiante(String rut) {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<RegistroCertificacion> lista = new ArrayList<>();
+
+		for (RegistroCertificacion r : registros) {
+			if (r.getRutEstudiante().equals(rut)) {
+				lista.add(r);
+			}
+		}
+
+		return lista;
 	}
 
 	@Override
@@ -217,6 +278,24 @@ public class Sistema implements ISistema {
 	public ArrayList<Estudiante> getEstudiantes() {
 
 		return null;
+	}
+
+	@Override
+	public String generarReporteProgresoEstudiante(String rut) {
+
+		if (registros == null || certificaciones == null) {
+			return "No hay información de certificaciones cargada.";
+		}
+
+		ProgresoEstudianteVisitor visitor = new ProgresoEstudianteVisitor(rut, certificaciones);
+
+		for (RegistroCertificacion r : registros) {
+			if (r != null) {
+				visitor.visitar(r);
+			}
+		}
+
+		return visitor.getReporte();
 	}
 
 }

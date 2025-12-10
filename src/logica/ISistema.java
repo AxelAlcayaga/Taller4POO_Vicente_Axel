@@ -20,6 +20,7 @@ public interface ISistema {
 	ArrayList<RegistroCertificacion> getRegistrosPorEstudiante(String rut);
 	ArrayList<Nota> getNotasPorEstudiante(String rut);
 	ArrayList<Estudiante> getEstudiantes();
+	String generarReporteProgresoEstudiante(String rut);
 
 	
 	double calcularPromedioGeneral(String rut);
