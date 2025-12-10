@@ -9,49 +9,87 @@ import logica.Sistema;
 
 public class MenuCoordinadorFrame extends JFrame {
 
-    private Coordinador coordinador;
-    private ISistema sistema;
+	private Coordinador coordinador;
+	private ISistema sistema;
 
-    public MenuCoordinadorFrame(Coordinador coordinador) {
-        super("AcademiCore - Coordinador");
+	public MenuCoordinadorFrame(Coordinador coordinador) {
+		super("AcademiCore - Coordinador");
+		this.coordinador = coordinador;
+		this.sistema = Sistema.getInstancia();
 
-        this.coordinador = coordinador;
-        this.sistema = Sistema.getInstancia();
+		setSize(600, 400);
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        setSize(400, 300);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10));
+		JTabbedPane tabs = new JTabbedPane();
+		tabs.addTab("Certificaciones", crearPanelCertificaciones());
+		tabs.addTab("Métricas", crearPanelMetricas());
+		tabs.addTab("Inscripción", crearPanelInscripcion());
+		tabs.addTab("Progreso", crearPanelProgreso());
 
-        JLabel lbl = new JLabel("Área: " + coordinador.getAreaAcademica(), SwingConstants.CENTER);
-        lbl.setFont(new Font("Arial", Font.BOLD, 16));
-        add(lbl, BorderLayout.NORTH);
+		add(tabs);
+		setVisible(true);
+	}
 
-        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
+	private JPanel crearPanelCertificaciones() {
+		JPanel p = new JPanel(new BorderLayout());
+		JTextArea area = new JTextArea("Aquí puedes:\n" + "- Modificar línea de certificación\n"
+				+ "- Generar certificados para estudiantes completados\n\n"
+				+ "(GUI lista, falta conectar lógica real en Sistema)");
+		area.setEditable(false);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		return p;
+	}
 
-        JButton btnCert = new JButton("Ver certificaciones");
-        JButton btnEst = new JButton("Ver estudiantes");
-        JButton btnSalir = new JButton("Salir");
+	private JPanel crearPanelMetricas() {
+		JPanel p = new JPanel(new BorderLayout());
+		JTextArea area = new JTextArea("Panel de Métricas y Análisis:\n"
+				+ "- Aquí podrías mostrar cantidad de estudiantes por certificación,\n"
+				+ "  tasas de aprobación, etc.\n\n" + "(TODO: llenar usando datos reales de Sistema)");
+		area.setEditable(false);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		return p;
+	}
 
-        panel.add(btnCert);
-        panel.add(btnEst);
-        panel.add(btnSalir);
+	private JPanel crearPanelInscripcion() {
+		JPanel p = new JPanel(new BorderLayout());
 
-        add(panel, BorderLayout.CENTER);
+		JTextArea info = new JTextArea("Inscripción a certificaciones:\n" + "- Listar líneas disponibles\n"
+				+ "- Mostrar requisitos y descripción\n" + "- Inscribir estudiante validando prerrequisitos\n");
+		info.setEditable(false);
 
-        btnCert.addActionListener(e ->
-                JOptionPane.showMessageDialog(this,
-                        "Aquí se mostrarán las certificaciones."));
+		JPanel abajo = new JPanel(new GridLayout(3, 2, 5, 5));
+		JTextField txtRut = new JTextField();
+		JTextField txtIdCert = new JTextField();
+		JButton btnInscribir = new JButton("Inscribir");
 
-        btnEst.addActionListener(e ->
-                JOptionPane.showMessageDialog(this,
-                        "Aquí se mostrarán los estudiantes."));
+		abajo.add(new JLabel("RUT estudiante:"));
+		abajo.add(txtRut);
+		abajo.add(new JLabel("ID certificación:"));
+		abajo.add(txtIdCert);
+		abajo.add(new JLabel());
+		abajo.add(btnInscribir);
 
-        btnSalir.addActionListener(e -> {
-            dispose();
-            new LoginFrame();
-        });
+		btnInscribir.addActionListener(e -> {
+			String rut = txtRut.getText();
+			String id = txtIdCert.getText();
+			sistema.inscribirEstudianteEnCertitifacion(rut, id);
+			JOptionPane.showMessageDialog(this, "Inscripción registrada (falta validar prerrequisitos en la lógica).");
+		});
 
-        setVisible(true);
-    }
+		p.add(new JScrollPane(info), BorderLayout.CENTER);
+		p.add(abajo, BorderLayout.SOUTH);
+		return p;
+	}
+
+	private JPanel crearPanelProgreso() {
+		JPanel p = new JPanel(new BorderLayout());
+		JTextArea area = new JTextArea("Seguimiento de Progreso:\n"
+				+ "- Aquí se puede usar Visitor para distintas acciones según tipo de certificación\n"
+				+ "- Mostrar progreso y asignaturas pendientes\n\n"
+				+ "(GUI lista; Visitor/logic en Sistema todavía por implementar.)");
+		area.setEditable(false);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		return p;
+	}
 }
