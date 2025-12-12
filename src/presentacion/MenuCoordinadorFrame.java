@@ -40,19 +40,31 @@ public class MenuCoordinadorFrame extends JFrame {
 	}
 
 	private JPanel crearPanelResumen() {
-		JPanel p = new JPanel();
-		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-		p.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel lbl1 = new JLabel("Usuario: " + coordinador.getNombreUsuario());
-		JLabel lbl2 = new JLabel("Rol: Coordinador");
+		JTextArea area = new JTextArea();
+		area.setEditable(false);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
 
-		lbl1.setAlignmentX(Component.LEFT_ALIGNMENT);
-		lbl2.setAlignmentX(Component.LEFT_ALIGNMENT);
+		JPanel abajo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JButton btnResumen = new JButton("Ver resumen de certificaciones");
+		JButton btnCertificados = new JButton("Ver estudiantes certificados");
 
-		p.add(lbl1);
-		p.add(Box.createVerticalStrut(10));
-		p.add(lbl2);
+		abajo.add(btnResumen);
+		abajo.add(btnCertificados);
+
+		p.add(abajo, BorderLayout.SOUTH);
+
+		btnResumen.addActionListener(e -> {
+			String reporte = sistema.generarResumenCertificaciones();
+			area.setText(reporte);
+		});
+
+		btnCertificados.addActionListener(e -> {
+			String reporte = sistema.generarListadoCertificados();
+			area.setText(reporte);
+		});
 
 		return p;
 	}
