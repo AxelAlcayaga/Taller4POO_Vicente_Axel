@@ -36,7 +36,11 @@ public interface ISistema {
 
 	boolean eliminarUsuarioYReferencias(String nombreUsuario);
 
-	void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion);
+	String inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion);
+
+	public int calcularCreditosAprobados(String rut);
+
+	public Certificacion buscarCertificacion(String idCertificacion);
 
 	double calcularPromedioGeneral(String rut);
 

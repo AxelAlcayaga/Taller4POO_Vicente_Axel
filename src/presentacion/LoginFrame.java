@@ -48,11 +48,10 @@ public class LoginFrame extends JFrame {
 			return;
 		}
 
-
 		if (u.esAdministrador()) {
 			new MenuAdminFrame((Administrador) u);
 		} else if (u.esCoordinador()) {
-			new MenuCoordinadorFrame((Coordinador) u);
+			new MenuCoordinadorFrame();
 		} else if (u.esEstudiante()) {
 			new MenuEstudianteFrame((Estudiante) u);
 		}

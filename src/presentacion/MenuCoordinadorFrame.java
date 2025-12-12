@@ -2,32 +2,20 @@ package presentacion;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-
-import dominio.Coordinador;
-import dominio.Certificacion;
 import dominio.Estudiante;
+import dominio.Certificacion;
 import logica.ISistema;
 import logica.Sistema;
 
 public class MenuCoordinadorFrame extends JFrame {
 
-	private Coordinador coordinador;
 	private ISistema sistema;
 
-	private JComboBox<String> comboEstudiantes;
-	private JComboBox<String> comboCertificaciones;
-	private JTextArea areaMensajes;
-
-	private ArrayList<Estudiante> listaEstudiantes;
-	private ArrayList<Certificacion> listaCertificaciones;
-
-	public MenuCoordinadorFrame(Coordinador coordinador) {
+	public MenuCoordinadorFrame() {
 		super("AcademiCore - Coordinador");
-		this.coordinador = coordinador;
 		this.sistema = Sistema.getInstancia();
 
-		setSize(650, 400);
+		setSize(600, 400);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -40,109 +28,85 @@ public class MenuCoordinadorFrame extends JFrame {
 	}
 
 	private JPanel crearPanelResumen() {
-		JPanel p = new JPanel(new BorderLayout(10, 10));
-		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		JPanel panel = new JPanel(new BorderLayout(10, 10));
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JTextArea area = new JTextArea();
 		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
 
-		JPanel abajo = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		JButton btnResumen = new JButton("Ver resumen de certificaciones");
-		JButton btnCertificados = new JButton("Ver estudiantes certificados");
+		JButton btnCargar = new JButton("Cargar resumen");
 
-		abajo.add(btnResumen);
-		abajo.add(btnCertificados);
-
-		p.add(abajo, BorderLayout.SOUTH);
-
-		btnResumen.addActionListener(e -> {
-			String reporte = sistema.generarResumenCertificaciones();
-			area.setText(reporte);
-		});
-
-		btnCertificados.addActionListener(e -> {
-			String reporte = sistema.generarListadoCertificados();
-			area.setText(reporte);
-		});
-
-		return p;
-	}
-
-	private JPanel crearPanelInscripcion() {
-		JPanel panel = new JPanel(new BorderLayout());
-
-		JPanel arriba = new JPanel(new GridLayout(2, 2));
-
-		arriba.add(new JLabel("Estudiante (RUT - usuario):"));
-		JComboBox<String> comboEstudiantes = new JComboBox<>();
-
-		for (Estudiante e : sistema.listarEstudiantes()) {
-			comboEstudiantes.addItem(e.getRut() + " - " + e.getNombreUsuario());
-		}
-
-		arriba.add(comboEstudiantes);
-
-		arriba.add(new JLabel("Certificación:"));
-		JComboBox<String> comboCertificaciones = new JComboBox<>();
-
-		for (Certificacion c : sistema.listarCertificaciones()) {
-			comboCertificaciones.addItem(c.getIdCertificacion() + " - " + c.getNombreCertificacion());
-		}
-
-		arriba.add(comboCertificaciones);
-
-		panel.add(arriba, BorderLayout.NORTH);
-
-		JButton inscribir = new JButton("Inscribir estudiante en certificación");
-
-		inscribir.addActionListener(e -> {
-
-			if (comboEstudiantes.getSelectedItem() == null) {
-				JOptionPane.showMessageDialog(this, "Debe seleccionar un estudiante", "Error",
-						JOptionPane.ERROR_MESSAGE);
-				return;
+		btnCargar.addActionListener(e -> {
+			area.setText("");
+			for (Estudiante est : sistema.listarEstudiantes()) {
+				int creditos = sistema.calcularCreditosAprobados(est.getRut());
+				area.append(est.getRut() + " | " + est.getCorreo() + " | Créditos aprobados: " + creditos + "\n");
 			}
-
-			if (comboCertificaciones.getSelectedItem() == null) {
-				JOptionPane.showMessageDialog(this, "Debe seleccionar una certificación", "Error",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-
-			String rut = comboEstudiantes.getSelectedItem().toString().split(" - ")[0];
-			String idCert = comboCertificaciones.getSelectedItem().toString().split(" - ")[0];
-
-			sistema.inscribirEstudianteEnCertificacion(rut, idCert);
-
-			JOptionPane.showMessageDialog(this, "Estudiante inscrito correctamente en " + idCert);
 		});
 
-		panel.add(inscribir, BorderLayout.SOUTH);
+		panel.add(new JScrollPane(area), BorderLayout.CENTER);
+		panel.add(btnCargar, BorderLayout.SOUTH);
 
 		return panel;
 	}
 
-	private void inscribirSeleccion() {
-		int idxEst = comboEstudiantes.getSelectedIndex();
-		int idxCert = comboCertificaciones.getSelectedIndex();
+	private JPanel crearPanelInscripcion() {
+		JPanel panel = new JPanel(new BorderLayout(10, 10));
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		if (idxEst < 0 || idxCert < 0) {
-			JOptionPane.showMessageDialog(this, "Debe seleccionar un estudiante y una certificación.", "Mensaje",
-					JOptionPane.WARNING_MESSAGE);
-			return;
+		JPanel form = new JPanel(new GridLayout(2, 2, 5, 5));
+
+		JComboBox<String> cbEstudiantes = new JComboBox<>();
+		JComboBox<String> cbCertificaciones = new JComboBox<>();
+
+		for (Estudiante e : sistema.listarEstudiantes()) {
+			cbEstudiantes.addItem(e.getRut() + " - " + e.getCorreo());
 		}
 
-		Estudiante est = listaEstudiantes.get(idxEst);
-		Certificacion cert = listaCertificaciones.get(idxCert);
+		for (Certificacion c : sistema.listarCertificaciones()) {
+			cbCertificaciones.addItem(c.getIdCertificacion() + " - " + c.getNombreCertificacion());
+		}
 
-		sistema.inscribirEstudianteEnCertificacion(est.getRut(), cert.getIdCertificacion());
+		form.add(new JLabel("Estudiante (RUT - usuario):"));
+		form.add(cbEstudiantes);
+		form.add(new JLabel("Certificación:"));
+		form.add(cbCertificaciones);
 
-		String msg = "Estudiante " + est.getRut() + " inscrito en " + cert.getNombreCertificacion() + "\n";
+		JTextArea areaInfo = new JTextArea();
+		areaInfo.setEditable(false);
 
-		areaMensajes.append(msg);
+		JButton btnInscribir = new JButton("Inscribir estudiante en certificación");
 
-		JOptionPane.showMessageDialog(this, "Inscripción realizada correctamente.", "Mensaje",
-				JOptionPane.INFORMATION_MESSAGE);
+		btnInscribir.addActionListener(e -> {
+			if (cbEstudiantes.getSelectedItem() == null || cbCertificaciones.getSelectedItem() == null) {
+				JOptionPane.showMessageDialog(this, "Debe seleccionar estudiante y certificación");
+				return;
+			}
+
+			String rut = cbEstudiantes.getSelectedItem().toString().split(" - ")[0];
+			String idCert = cbCertificaciones.getSelectedItem().toString().split(" - ")[0];
+
+			Certificacion cert = sistema.buscarCertificacion(idCert);
+			int creditosAprobados = sistema.calcularCreditosAprobados(rut);
+
+			areaInfo.setText("Estudiante: " + rut + "\n" + "Certificación: " + cert.getNombreCertificacion() + "\n"
+					+ "Créditos aprobados: " + creditosAprobados + "\n" + "Créditos requeridos: "
+					+ cert.getCreditosMinimos() + "\n");
+
+			if (creditosAprobados < cert.getCreditosMinimos()) {
+				JOptionPane.showMessageDialog(this, "El estudiante tiene " + creditosAprobados
+						+ " créditos aprobados, y se requieren " + cert.getCreditosMinimos());
+				return;
+			}
+
+			sistema.inscribirEstudianteEnCertificacion(rut, idCert);
+			JOptionPane.showMessageDialog(this, "Estudiante inscrito correctamente");
+		});
+
+		panel.add(form, BorderLayout.NORTH);
+		panel.add(new JScrollPane(areaInfo), BorderLayout.CENTER);
+		panel.add(btnInscribir, BorderLayout.SOUTH);
+
+		return panel;
 	}
 }

@@ -144,9 +144,31 @@ public class Sistema implements ISistema {
 		s.close();
 	}
 
-	private void cargarCursos() {
-		// TODO Auto-generated method stub
+	private void cargarCursos() throws FileNotFoundException {
+		File f = new File("cursos.txt");
+		Scanner sc = new Scanner(f);
 
+		while (sc.hasNextLine()) {
+			String[] p = sc.nextLine().split(";");
+
+			String nrc = p[0];
+			String nombre = p[1];
+			int semestre = Integer.parseInt(p[2]);
+			int creditos = Integer.parseInt(p[3]);
+			String area = p[4];
+
+			Curso c = new Curso(nrc, nombre, creditos, area, String.valueOf(semestre));
+
+			if (p.length == 6) {
+				String[] prereq = p[5].split(",");
+				for (String r : prereq) {
+					c.getPrerrequisitos().add(r.trim());
+				}
+			}
+
+			cursos.add(c);
+		}
+		sc.close();
 	}
 
 	private void cargarNotas() throws FileNotFoundException {
@@ -299,16 +321,80 @@ public class Sistema implements ISistema {
 	}
 
 	@Override
-	public void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion) {
+	public String inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion) {
+		Estudiante est = null;
+		for (Estudiante e : estudiantes) {
+			if (e.getRut().equals(rutEstudiante)) {
+				est = e;
+				break;
+			}
+		}
+		if (est == null) {
+			return "No se encontró el estudiante con RUT " + rutEstudiante;
+		}
 
-		String fechaHoy = java.time.LocalDate.now().toString();
+		Certificacion cert = null;
+		for (Certificacion c : certificaciones) {
+			if (c.getIdCertificacion().equals(idCertificacion)) {
+				cert = c;
+				break;
+			}
+		}
+		if (cert == null) {
+			return "No se encontró la certificación con ID " + idCertificacion;
+		}
 
-		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0);
+		for (RegistroCertificacion r : registros) {
+			if (r.getRutEstudiante().equals(rutEstudiante) && r.getIdCertificacion().equals(idCertificacion)
+					&& !r.getEstado().equalsIgnoreCase("Suspendida")) {
+				return "El estudiante ya tiene un registro para esta certificación (estado: " + r.getEstado() + ").";
+			}
+		}
+
+		int creditosAprobados = calcularCreditosAprobados(rutEstudiante);
+		int creditosMinimos = cert.getCreditosMinimos();
+
+		if (creditosAprobados < creditosMinimos) {
+			return "El estudiante tiene " + creditosAprobados + " créditos aprobados, " + "y se requieren "
+					+ creditosMinimos + " para inscribir la certificación.";
+		}
+
+		String fechaHoy = java.time.LocalDate.now().toString(); // yyyy-MM-dd
+		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0 // avance
+																													// inicial
+		);
 
 		registros.add(reg);
 
-		System.out.println("Estudiante " + rutEstudiante + " inscrito en certificación " + idCertificacion
-				+ " (solo en memoria, no se escribe en el archivo)");
+		return "Estudiante " + rutEstudiante + " inscrito en certificación " + idCertificacion + " correctamente.";
+	}
+
+	public int calcularCreditosAprobados(String rut) {
+		int total = 0;
+
+		for (Nota n : notas) {
+			if (!n.getRutEstudiante().equals(rut))
+				continue;
+			if (!n.getEstado().equalsIgnoreCase("Aprobada"))
+				continue;
+
+			for (Curso c : cursos) {
+				if (c.getNrc().equals(n.getCodigoAsignatura())) {
+					total += c.getCreditos();
+					break;
+				}
+			}
+		}
+		return total;
+	}
+
+	private Curso buscarCursoPorNrc(String nrc) {
+		for (Curso c : cursos) {
+			if (c.getNrc().equalsIgnoreCase(nrc)) {
+				return c;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -404,7 +490,7 @@ public class Sistema implements ISistema {
 				hayAlMenosUno = true;
 
 				Estudiante est = buscarEstudiantePorRut(r.getRutEstudiante());
-				Certificacion cert = buscarCertificacionPorId(r.getIdCertificacion());
+				Certificacion cert = buscarCertificacion(r.getIdCertificacion());
 
 				String nombreEst = (est != null) ? est.getNombreUsuario() : "(desconocido)";
 				String nombreCert = (cert != null) ? cert.getNombreCertificacion() : r.getIdCertificacion();
@@ -422,7 +508,8 @@ public class Sistema implements ISistema {
 		return sb.toString();
 	}
 
-	private Certificacion buscarCertificacionPorId(String idCert) {
+	@Override
+	public Certificacion buscarCertificacion(String idCert) {
 		for (Certificacion c : certificaciones) {
 			if (c.getIdCertificacion().equals(idCert)) {
 				return c;
