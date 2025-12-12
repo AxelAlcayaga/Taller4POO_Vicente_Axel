@@ -72,6 +72,7 @@ public class Sistema implements ISistema {
 			String contraseña = partes[5];
 			Estudiante e = new Estudiante(correo, contraseña, rut, carrera, semestre, correo);
 			usuarios.add(e);
+			estudiantes.add(e);
 
 		}
 		s.close();
@@ -251,12 +252,6 @@ public class Sistema implements ISistema {
 	}
 
 	@Override
-	public void inscribirEstudianteEnCertitifacion(String rut, String idCertificacion) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void agregarUsuario(Usuario u) {
 		// TODO Auto-generated method stub
 
@@ -305,13 +300,147 @@ public class Sistema implements ISistema {
 
 	@Override
 	public void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion) {
+
 		String fechaHoy = java.time.LocalDate.now().toString();
 
 		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0);
 
 		registros.add(reg);
 
-		System.out.println("Estudiante " + rutEstudiante + " inscrito en certificación " + idCertificacion);
+		System.out.println("Estudiante " + rutEstudiante + " inscrito en certificación " + idCertificacion
+				+ " (solo en memoria, no se escribe en el archivo)");
+	}
+
+	@Override
+	public ArrayList<Usuario> listarUsuarios() {
+		return new ArrayList<>(usuarios);
+	}
+
+	@Override
+	public Usuario buscarUsuarioPorNombre(String nombreUsuario) {
+		for (Usuario u : usuarios) {
+			if (u.getNombreUsuario().equals(nombreUsuario)) {
+				return u;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean eliminarUsuarioYReferencias(String nombreUsuario) {
+
+		Usuario objetivo = buscarUsuarioPorNombre(nombreUsuario);
+		if (objetivo == null) {
+			return false;
+		}
+
+		usuarios.remove(objetivo);
+
+		if (objetivo instanceof Estudiante) {
+			Estudiante est = (Estudiante) objetivo;
+
+			estudiantes.remove(est);
+
+			String rut = est.getRut();
+
+			notas.removeIf(n -> n.getRutEstudiante().equals(rut));
+
+			registros.removeIf(r -> r.getRutEstudiante().equals(rut));
+		}
+
+		System.out.println("Usuario " + nombreUsuario + " eliminado junto a sus referencias.");
+
+		return true;
+	}
+
+	@Override
+	public String generarResumenCertificaciones() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Resumen de certificaciones:\n\n");
+
+		if (certificaciones.isEmpty()) {
+			sb.append("No hay certificaciones cargadas.\n");
+			return sb.toString();
+		}
+
+		for (Certificacion c : certificaciones) {
+			int activos = 0;
+			int completadas = 0;
+			int suspendidas = 0;
+
+			for (RegistroCertificacion r : registros) {
+				if (r.getIdCertificacion().equals(c.getIdCertificacion())) {
+					String estado = r.getEstado().toLowerCase();
+					if (estado.contains("activa")) {
+						activos++;
+					} else if (estado.contains("complet")) {
+						completadas++;
+					} else if (estado.contains("suspend")) {
+						suspendidas++;
+					}
+				}
+			}
+
+			sb.append(c.getIdCertificacion()).append(" - ").append(c.getNombreCertificacion()).append("\n")
+					.append("  Inscritos activos: ").append(activos).append("\n").append("  Completadas: ")
+					.append(completadas).append("\n").append("  Suspendidas: ").append(suspendidas).append("\n\n");
+		}
+
+		return sb.toString();
+	}
+
+	@Override
+	public String generarListadoCertificados() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Estudiantes con certificaciones completadas:\n\n");
+
+		boolean hayAlMenosUno = false;
+
+		for (RegistroCertificacion r : registros) {
+			boolean completadaPorEstado = r.getEstado().equalsIgnoreCase("Completada");
+			boolean completadaPorAvance = r.getAvance() >= 100;
+
+			if (completadaPorEstado || completadaPorAvance) {
+				hayAlMenosUno = true;
+
+				Estudiante est = buscarEstudiantePorRut(r.getRutEstudiante());
+				Certificacion cert = buscarCertificacionPorId(r.getIdCertificacion());
+
+				String nombreEst = (est != null) ? est.getNombreUsuario() : "(desconocido)";
+				String nombreCert = (cert != null) ? cert.getNombreCertificacion() : r.getIdCertificacion();
+
+				sb.append("Estudiante: ").append(nombreEst).append(" | RUT: ").append(r.getRutEstudiante())
+						.append(" | Certificación: ").append(nombreCert).append(" | Avance: ").append(r.getAvance())
+						.append("%").append(" | Estado: ").append(r.getEstado()).append("\n");
+			}
+		}
+
+		if (!hayAlMenosUno) {
+			return "No hay certificaciones completadas todavía.";
+		}
+
+		return sb.toString();
+	}
+
+	private Certificacion buscarCertificacionPorId(String idCert) {
+		for (Certificacion c : certificaciones) {
+			if (c.getIdCertificacion().equals(idCert)) {
+				return c;
+			}
+		}
+		return null;
+	}
+
+	private Estudiante buscarEstudiantePorRut(String rut) {
+		for (Usuario u : usuarios) {
+			if (u instanceof Estudiante) {
+				Estudiante e = (Estudiante) u;
+				if (e.getRut().equals(rut)) {
+					return e;
+				}
+			}
+		}
+		return null;
 	}
 
 }

@@ -30,17 +30,26 @@ public interface ISistema {
 
 	ArrayList<Estudiante> listarEstudiantes();
 
+	ArrayList<Usuario> listarUsuarios();
+
+	Usuario buscarUsuarioPorNombre(String nombreUsuario);
+
+	boolean eliminarUsuarioYReferencias(String nombreUsuario);
+
 	void inscribirEstudianteEnCertificacion(String rutEstudiante, String idCertificacion);
 
 	double calcularPromedioGeneral(String rut);
 
 	double calcularPromedioPorSemestre(String rut);
 
-	void inscribirEstudianteEnCertitifacion(String rut, String idCertificacion);
-
 	void agregarUsuario(Usuario u);
 
 	void eliminarUsuario(String nombreUsuario);
 
 	void cambiarContraseña(String nombreUsuario, String nuevaContraseña);
+
+	String generarResumenCertificaciones();
+
+	String generarListadoCertificados();
+
 }
