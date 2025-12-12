@@ -65,7 +65,7 @@ public class Sistema implements ISistema {
 			String linea = s.nextLine();
 			String[] partes = linea.split(";");
 			String rut = partes[0];
-			String nombre = partes[1];
+			// String nombre = partes[1];
 			String carrera = partes[2];
 			int semestre = Integer.parseInt(partes[3]);
 			String correo = partes[4];
@@ -79,8 +79,24 @@ public class Sistema implements ISistema {
 
 	}
 
-	private void cargarAsignaturasCertificacion() {
+	private void cargarAsignaturasCertificacion() throws FileNotFoundException {
+		File f = new File("asignaturas_certificaciones.txt");
+		Scanner s = new Scanner(f);
 
+		while (s.hasNextLine()) {
+			String linea = s.nextLine().trim();
+			if (linea.isEmpty())
+				continue;
+
+			String[] partes = linea.split(";");
+			String idCert = partes[0].trim();
+			String nrc = partes[1].trim();
+
+			AsignaturaCertificacion ac = new AsignaturaCertificacion(idCert, nrc);
+			asignaturasCertificacion.add(ac);
+		}
+
+		s.close();
 	}
 
 	private void cargarCertificaciones() throws FileNotFoundException {
@@ -138,7 +154,7 @@ public class Sistema implements ISistema {
 			String fecha = partes[2];
 			String estado = partes[3];
 			int avance = Integer.parseInt(partes[4]);
-			RegistroCertificacion r = new RegistroCertificacion(rut, fecha, idCert, estado, avance);
+			RegistroCertificacion r = new RegistroCertificacion(rut, idCert, fecha, estado, avance);
 			registros.add(r);
 		}
 		s.close();
@@ -226,8 +242,7 @@ public class Sistema implements ISistema {
 
 	@Override
 	public ArrayList<Curso> listarCurso() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<>(cursos);
 	}
 
 	@Override
@@ -269,26 +284,157 @@ public class Sistema implements ISistema {
 
 	@Override
 	public double calcularPromedioPorSemestre(String rut) {
-		// TODO Auto-generated method stub
-		return 0;
+		ArrayList<Nota> notasEst = getNotasPorEstudiante(rut);
+		if (notasEst == null || notasEst.isEmpty())
+			return 0;
+
+		String ultimo = null;
+		int mejorKey = Integer.MIN_VALUE;
+
+		for (Nota n : notasEst) {
+			if (n == null)
+				continue;
+			String sem = n.getSemestre();
+			int key = semestreKey(sem);
+			if (key > mejorKey) {
+				mejorKey = key;
+				ultimo = sem;
+			}
+		}
+
+		if (ultimo == null)
+			return 0;
+
+		double suma = 0;
+		int cont = 0;
+
+		for (Nota n : notasEst) {
+			if (n == null)
+				continue;
+			if (!ultimo.equals(n.getSemestre()))
+				continue;
+
+			String estado = (n.getEstado() == null) ? "" : n.getEstado().trim().toLowerCase();
+			if (estado.contains("curs"))
+				continue;
+
+			suma += n.getCalificacion();
+			cont++;
+		}
+
+		return (cont == 0) ? 0 : (suma / cont);
+	}
+
+	private int semestreKey(String semestre) {
+		if (semestre == null)
+			return Integer.MIN_VALUE;
+		String s = semestre.trim();
+		if (!s.contains("-"))
+			return Integer.MIN_VALUE;
+
+		String[] p = s.split("-");
+		try {
+			int year = Integer.parseInt(p[0].trim());
+			int sem = Integer.parseInt(p[1].trim());
+			return year * 10 + sem;
+		} catch (Exception e) {
+			return Integer.MIN_VALUE;
+		}
 	}
 
 	@Override
 	public void agregarUsuario(Usuario u) {
-		// TODO Auto-generated method stub
+		if (u == null)
+			return;
 
+		for (Usuario x : usuarios) {
+			if (x != null && x.getNombreUsuario().equalsIgnoreCase(u.getNombreUsuario())) {
+				return;
+			}
+		}
+
+		usuarios.add(u);
+
+		if (u instanceof Estudiante) {
+			estudiantes.add((Estudiante) u);
+		}
 	}
 
 	@Override
 	public void eliminarUsuario(String nombreUsuario) {
-		// TODO Auto-generated method stub
+		if (nombreUsuario == null)
+			return;
 
+		Usuario objetivo = buscarUsuarioPorNombre(nombreUsuario);
+		if (objetivo == null)
+			return;
+
+		usuarios.remove(objetivo);
+
+		if (objetivo instanceof Estudiante) {
+			Estudiante est = (Estudiante) objetivo;
+			estudiantes.remove(est);
+
+			String rut = est.getRut();
+			notas.removeIf(n -> n.getRutEstudiante().equals(rut));
+			registros.removeIf(r -> r.getRutEstudiante().equals(rut));
+		}
+	}
+
+	public int calcularProgresoCertificacion(String rut, String idCert) {
+
+		ArrayList<String> ramosCert = new ArrayList<>();
+
+		for (AsignaturaCertificacion ac : asignaturasCertificacion) {
+			if (ac.getIdCertificacion().equals(idCert)) {
+				ramosCert.add(ac.getNrcCurso());
+			}
+		}
+
+		if (ramosCert.isEmpty())
+			return 0;
+
+		int aprobados = 0;
+
+		for (Nota n : notas) {
+			if (!n.getRutEstudiante().equals(rut))
+				continue;
+			if (!n.getEstado().equalsIgnoreCase("Aprobada"))
+				continue;
+
+			if (ramosCert.contains(n.getCodigoAsignatura())) {
+				aprobados++;
+			}
+		}
+
+		return (int) ((aprobados * 100.0) / ramosCert.size());
+	}
+
+	public void actualizarProgresosCertificaciones(String rut) {
+
+		for (RegistroCertificacion r : registros) {
+			if (!r.getRutEstudiante().equals(rut))
+				continue;
+
+			int avance = calcularProgresoCertificacion(rut, r.getIdCertificacion());
+			r.setProgreso(avance);
+
+			if (avance >= 100) {
+				r.setEstado("Completada");
+			}
+		}
 	}
 
 	@Override
 	public void cambiarContraseña(String nombreUsuario, String nuevaContraseña) {
-		// TODO Auto-generated method stub
+		if (nombreUsuario == null || nuevaContraseña == null)
+			return;
 
+		Usuario u = buscarUsuarioPorNombre(nombreUsuario);
+		if (u == null)
+			return;
+
+		u.setContraseña(nuevaContraseña);
 	}
 
 	@Override
@@ -359,9 +505,9 @@ public class Sistema implements ISistema {
 					+ creditosMinimos + " para inscribir la certificación.";
 		}
 
-		String fechaHoy = java.time.LocalDate.now().toString(); // yyyy-MM-dd
-		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0 // avance
-																													// inicial
+		String fechaHoy = java.time.LocalDate.now().toString();
+		RegistroCertificacion reg = new RegistroCertificacion(rutEstudiante, idCertificacion, fechaHoy, "Activa", 0
+
 		);
 
 		registros.add(reg);
@@ -484,7 +630,7 @@ public class Sistema implements ISistema {
 
 		for (RegistroCertificacion r : registros) {
 			boolean completadaPorEstado = r.getEstado().equalsIgnoreCase("Completada");
-			boolean completadaPorAvance = r.getAvance() >= 100;
+			boolean completadaPorAvance = r.getProgreso() >= 100;
 
 			if (completadaPorEstado || completadaPorAvance) {
 				hayAlMenosUno = true;
@@ -496,7 +642,7 @@ public class Sistema implements ISistema {
 				String nombreCert = (cert != null) ? cert.getNombreCertificacion() : r.getIdCertificacion();
 
 				sb.append("Estudiante: ").append(nombreEst).append(" | RUT: ").append(r.getRutEstudiante())
-						.append(" | Certificación: ").append(nombreCert).append(" | Avance: ").append(r.getAvance())
+						.append(" | Certificación: ").append(nombreCert).append(" | Avance: ").append(r.getProgreso())
 						.append("%").append(" | Estado: ").append(r.getEstado()).append("\n");
 			}
 		}

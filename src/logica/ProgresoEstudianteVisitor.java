@@ -33,7 +33,7 @@ public class ProgresoEstudianteVisitor implements RegistroCertificacionVisitor {
 			nombreCert = registro.getIdCertificacion();
 		}
 
-		int avance = registro.getAvance();
+		int avance = registro.getProgreso();
 
 		reporte.append("Certificación: ").append(nombreCert).append(" | Estado: ").append(registro.getEstado())
 				.append(" | Avance: ").append(avance).append("%").append("\n");

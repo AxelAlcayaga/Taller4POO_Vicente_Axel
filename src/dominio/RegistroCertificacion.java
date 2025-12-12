@@ -6,34 +6,55 @@ public class RegistroCertificacion {
 	private String idCertificacion;
 	private String fechaRegistro;
 	private String estado;
-	private int avance;
+	private int progreso;
 
 	public RegistroCertificacion(String rutEstudiante, String idCertificacion, String fechaRegistro, String estado,
-			int avance) {
+			int progreso) {
 		this.rutEstudiante = rutEstudiante;
 		this.idCertificacion = idCertificacion;
 		this.fechaRegistro = fechaRegistro;
 		this.estado = estado;
-		this.avance = avance;
+		this.progreso = progreso;
+
 	}
 
 	public String getRutEstudiante() {
 		return rutEstudiante;
 	}
 
+	public void setRutEstudiante(String rutEstudiante) {
+		this.rutEstudiante = rutEstudiante;
+	}
+
 	public String getIdCertificacion() {
 		return idCertificacion;
+	}
+
+	public void setIdCertificacion(String idCertificacion) {
+		this.idCertificacion = idCertificacion;
 	}
 
 	public String getFechaRegistro() {
 		return fechaRegistro;
 	}
 
+	public void setFechaRegistro(String fechaRegistro) {
+		this.fechaRegistro = fechaRegistro;
+	}
+
 	public String getEstado() {
 		return estado;
 	}
 
-	public int getAvance() {
-		return avance;
+	public void setEstado(String estado) {
+		this.estado = estado;
+	}
+
+	public int getProgreso() {
+		return progreso;
+	}
+
+	public void setProgreso(int progreso) {
+		this.progreso = progreso;
 	}
 }

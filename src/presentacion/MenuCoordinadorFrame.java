@@ -2,111 +2,109 @@ package presentacion;
 
 import javax.swing.*;
 import java.awt.*;
-import dominio.Estudiante;
+
+import dominio.Coordinador;
 import dominio.Certificacion;
+import dominio.Estudiante;
 import logica.ISistema;
 import logica.Sistema;
 
 public class MenuCoordinadorFrame extends JFrame {
 
+	private Coordinador coordinador;
 	private ISistema sistema;
 
-	public MenuCoordinadorFrame() {
+	public MenuCoordinadorFrame(Coordinador coordinador) {
 		super("AcademiCore - Coordinador");
+		this.coordinador = coordinador;
 		this.sistema = Sistema.getInstancia();
 
-		setSize(600, 400);
+		setSize(700, 450);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		JTabbedPane tabs = new JTabbedPane();
-		tabs.addTab("Resumen", crearPanelResumen());
-		tabs.addTab("Inscribir estudiante", crearPanelInscripcion());
+		tabs.addTab("Inscribir", crearPanelInscribir());
+		tabs.addTab("Resumen certificaciones", crearPanelResumen());
+		tabs.addTab("Certificados", crearPanelCertificados());
 
 		add(tabs);
 		setVisible(true);
 	}
 
-	private JPanel crearPanelResumen() {
-		JPanel panel = new JPanel(new BorderLayout(10, 10));
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	private JPanel crearPanelInscribir() {
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+		JComboBox<String> cbEst = new JComboBox<>();
+		JComboBox<String> cbCert = new JComboBox<>();
+
+		for (Estudiante e : sistema.listarEstudiantes()) {
+			cbEst.addItem(e.getRut() + " - " + e.getNombreUsuario());
+		}
+
+		for (Certificacion c : sistema.listarCertificaciones()) {
+			cbCert.addItem(c.getIdCertificacion() + " - " + c.getNombreCertificacion());
+		}
+
+		JPanel top = new JPanel(new GridLayout(2, 2, 5, 5));
+		top.add(new JLabel("Estudiante:"));
+		top.add(cbEst);
+		top.add(new JLabel("Certificación:"));
+		top.add(cbCert);
 
 		JTextArea area = new JTextArea();
 		area.setEditable(false);
 
-		JButton btnCargar = new JButton("Cargar resumen");
+		JButton btn = new JButton("Inscribir");
 
-		btnCargar.addActionListener(e -> {
-			area.setText("");
-			for (Estudiante est : sistema.listarEstudiantes()) {
-				int creditos = sistema.calcularCreditosAprobados(est.getRut());
-				area.append(est.getRut() + " | " + est.getCorreo() + " | Créditos aprobados: " + creditos + "\n");
-			}
+		btn.addActionListener(e -> {
+			if (cbEst.getSelectedItem() == null || cbCert.getSelectedItem() == null)
+				return;
+
+			String rut = cbEst.getSelectedItem().toString().split(" - ")[0].trim();
+			String idCert = cbCert.getSelectedItem().toString().split(" - ")[0].trim();
+
+			String msg = sistema.inscribirEstudianteEnCertificacion(rut, idCert);
+			area.setText(msg);
+			JOptionPane.showMessageDialog(this, msg);
 		});
 
-		panel.add(new JScrollPane(area), BorderLayout.CENTER);
-		panel.add(btnCargar, BorderLayout.SOUTH);
-
-		return panel;
+		p.add(top, BorderLayout.NORTH);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
+		return p;
 	}
 
-	private JPanel crearPanelInscripcion() {
-		JPanel panel = new JPanel(new BorderLayout(10, 10));
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	private JPanel crearPanelResumen() {
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JPanel form = new JPanel(new GridLayout(2, 2, 5, 5));
+		JTextArea area = new JTextArea();
+		area.setEditable(false);
 
-		JComboBox<String> cbEstudiantes = new JComboBox<>();
-		JComboBox<String> cbCertificaciones = new JComboBox<>();
+		JButton btn = new JButton("Ver resumen");
 
-		for (Estudiante e : sistema.listarEstudiantes()) {
-			cbEstudiantes.addItem(e.getRut() + " - " + e.getCorreo());
-		}
+		btn.addActionListener(e -> area.setText(sistema.generarResumenCertificaciones()));
 
-		for (Certificacion c : sistema.listarCertificaciones()) {
-			cbCertificaciones.addItem(c.getIdCertificacion() + " - " + c.getNombreCertificacion());
-		}
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
+		return p;
+	}
 
-		form.add(new JLabel("Estudiante (RUT - usuario):"));
-		form.add(cbEstudiantes);
-		form.add(new JLabel("Certificación:"));
-		form.add(cbCertificaciones);
+	private JPanel crearPanelCertificados() {
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JTextArea areaInfo = new JTextArea();
-		areaInfo.setEditable(false);
+		JTextArea area = new JTextArea();
+		area.setEditable(false);
 
-		JButton btnInscribir = new JButton("Inscribir estudiante en certificación");
+		JButton btn = new JButton("Ver certificados");
 
-		btnInscribir.addActionListener(e -> {
-			if (cbEstudiantes.getSelectedItem() == null || cbCertificaciones.getSelectedItem() == null) {
-				JOptionPane.showMessageDialog(this, "Debe seleccionar estudiante y certificación");
-				return;
-			}
+		btn.addActionListener(e -> area.setText(sistema.generarListadoCertificados()));
 
-			String rut = cbEstudiantes.getSelectedItem().toString().split(" - ")[0];
-			String idCert = cbCertificaciones.getSelectedItem().toString().split(" - ")[0];
-
-			Certificacion cert = sistema.buscarCertificacion(idCert);
-			int creditosAprobados = sistema.calcularCreditosAprobados(rut);
-
-			areaInfo.setText("Estudiante: " + rut + "\n" + "Certificación: " + cert.getNombreCertificacion() + "\n"
-					+ "Créditos aprobados: " + creditosAprobados + "\n" + "Créditos requeridos: "
-					+ cert.getCreditosMinimos() + "\n");
-
-			if (creditosAprobados < cert.getCreditosMinimos()) {
-				JOptionPane.showMessageDialog(this, "El estudiante tiene " + creditosAprobados
-						+ " créditos aprobados, y se requieren " + cert.getCreditosMinimos());
-				return;
-			}
-
-			sistema.inscribirEstudianteEnCertificacion(rut, idCert);
-			JOptionPane.showMessageDialog(this, "Estudiante inscrito correctamente");
-		});
-
-		panel.add(form, BorderLayout.NORTH);
-		panel.add(new JScrollPane(areaInfo), BorderLayout.CENTER);
-		panel.add(btnInscribir, BorderLayout.SOUTH);
-
-		return panel;
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
+		return p;
 	}
 }

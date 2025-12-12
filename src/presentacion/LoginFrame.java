@@ -51,7 +51,7 @@ public class LoginFrame extends JFrame {
 		if (u.esAdministrador()) {
 			new MenuAdminFrame((Administrador) u);
 		} else if (u.esCoordinador()) {
-			new MenuCoordinadorFrame();
+			new MenuCoordinadorFrame((Coordinador) u);
 		} else if (u.esEstudiante()) {
 			new MenuEstudianteFrame((Estudiante) u);
 		}

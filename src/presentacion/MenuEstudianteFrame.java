@@ -19,100 +19,18 @@ public class MenuEstudianteFrame extends JFrame {
 		this.estudiante = estudiante;
 		this.sistema = Sistema.getInstancia();
 
-		setSize(600, 400);
+		setSize(800, 500);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		JTabbedPane tabs = new JTabbedPane();
 		tabs.addTab("Datos", crearPanelDatos());
 		tabs.addTab("Notas", crearPanelNotas());
-		tabs.addTab("Promedio", crearPanelPromedio());
+		tabs.addTab("Promedios", crearPanelPromedios());
 		tabs.addTab("Certificaciones", crearPanelCertificaciones());
-		tabs.addTab("Malla", crearPanelMalla());
 
 		add(tabs);
 		setVisible(true);
-	}
-
-	private JPanel crearPanelMalla() {
-		JPanel panel = new JPanel(new BorderLayout(10, 10));
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-		JPanel panelMalla = new JPanel();
-		panelMalla.setLayout(new BoxLayout(panelMalla, BoxLayout.Y_AXIS));
-
-		ArrayList<Nota> notasEst = sistema.getNotasPorEstudiante(estudiante.getRut());
-
-		if (notasEst == null || notasEst.isEmpty()) {
-			panelMalla.add(new JLabel("No hay información de malla para este estudiante."));
-		} else {
-
-			java.util.Set<String> periodos = new java.util.TreeSet<>();
-
-			for (Nota n : notasEst) {
-				String semRaw = n.getSemestre();
-				if (semRaw != null && !semRaw.isBlank()) {
-					periodos.add(semRaw.trim());
-				}
-			}
-
-			if (periodos.isEmpty()) {
-				panelMalla.add(new JLabel("No se pudo determinar el semestre de las asignaturas."));
-			} else {
-
-				int numeroSemestre = 1;
-
-				for (String periodo : periodos) {
-
-					JPanel panelSemestre = new JPanel(new GridLayout(0, 1, 5, 5));
-					panelSemestre.setBorder(
-							BorderFactory.createTitledBorder("Semestre " + numeroSemestre + " (" + periodo + ")"));
-
-					boolean hayAsignaturasEnPeriodo = false;
-
-					for (Nota n : notasEst) {
-						if (periodo.equals(n.getSemestre())) {
-							hayAsignaturasEnPeriodo = true;
-
-							String texto = n.getCodigoAsignatura() + " | Estado: " + n.getEstado() + " | Nota: "
-									+ n.getCalificacion();
-
-							JLabel lbl = new JLabel(texto);
-							lbl.setOpaque(true);
-
-							String estado = n.getEstado().toLowerCase();
-
-							if (estado.contains("aprob")) {
-								lbl.setBackground(new Color(198, 239, 206));
-							} else if (estado.contains("reprob")) {
-								lbl.setBackground(new Color(255, 199, 206));
-							} else if (estado.contains("curs") || estado.contains("inscrito")) {
-								lbl.setBackground(new Color(255, 235, 156));
-							} else {
-								lbl.setBackground(Color.LIGHT_GRAY);
-							}
-
-							panelSemestre.add(lbl);
-						}
-					}
-
-					if (hayAsignaturasEnPeriodo) {
-						panelMalla.add(panelSemestre);
-						panelMalla.add(Box.createVerticalStrut(10));
-						numeroSemestre++;
-					}
-				}
-
-				if (panelMalla.getComponentCount() == 0) {
-					panelMalla.add(new JLabel("No se pudo agrupar la malla por semestre."));
-				}
-			}
-		}
-
-		JScrollPane scroll = new JScrollPane(panelMalla);
-		panel.add(scroll, BorderLayout.CENTER);
-
-		return panel;
 	}
 
 	private JPanel crearPanelDatos() {
@@ -122,17 +40,22 @@ public class MenuEstudianteFrame extends JFrame {
 
 		JLabel lbl1 = new JLabel("Usuario: " + estudiante.getNombreUsuario());
 		JLabel lbl2 = new JLabel("RUT: " + estudiante.getRut());
-		JLabel lbl3 = new JLabel("Carrera: " + estudiante.getCarrera() + " | Semestre: " + estudiante.getSemestre());
+		JLabel lbl3 = new JLabel(
+				"Carrera: " + estudiante.getCarrera() + " | Semestre actual: " + estudiante.getSemestre());
+		JLabel lbl4 = new JLabel("Correo: " + estudiante.getCorreo());
 
 		lbl1.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lbl2.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lbl3.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lbl4.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		p.add(lbl1);
-		p.add(Box.createVerticalStrut(10));
+		p.add(Box.createVerticalStrut(8));
 		p.add(lbl2);
-		p.add(Box.createVerticalStrut(10));
+		p.add(Box.createVerticalStrut(8));
 		p.add(lbl3);
+		p.add(Box.createVerticalStrut(8));
+		p.add(lbl4);
 
 		return p;
 	}
@@ -143,49 +66,54 @@ public class MenuEstudianteFrame extends JFrame {
 
 		JTextArea area = new JTextArea();
 		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
 
-		JButton btnCargar = new JButton("Cargar notas");
-		p.add(btnCargar, BorderLayout.SOUTH);
+		JButton btn = new JButton("Cargar notas");
 
-		btnCargar.addActionListener(e -> {
+		btn.addActionListener(e -> {
 			ArrayList<Nota> notas = sistema.getNotasPorEstudiante(estudiante.getRut());
 			if (notas == null || notas.isEmpty()) {
-				area.setText("No hay notas registradas para tu RUT.");
+				area.setText("No hay notas registradas.");
 				return;
 			}
 
 			StringBuilder sb = new StringBuilder();
-			sb.append("Notas del estudiante ").append(estudiante.getRut()).append(":\n\n");
+			sb.append("Notas de ").append(estudiante.getRut()).append("\n\n");
 
 			for (Nota n : notas) {
-				sb.append("Asignatura: ").append(n.getCodigoAsignatura()).append(" | Semestre: ")
-						.append(n.getSemestre()).append(" | Nota: ").append(n.getCalificacion()).append(" | Estado: ")
-						.append(n.getEstado()).append("\n");
+				sb.append(n.getCodigoAsignatura()).append(" | Sem: ").append(n.getSemestre()).append(" | Nota: ")
+						.append(n.getCalificacion()).append(" | Estado: ").append(n.getEstado()).append("\n");
 			}
 
 			area.setText(sb.toString());
 		});
 
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
 		return p;
 	}
 
-	private JPanel crearPanelPromedio() {
-		JPanel p = new JPanel(new BorderLayout(10, 10));
+	private JPanel crearPanelPromedios() {
+		JPanel p = new JPanel(new GridLayout(3, 1, 10, 10));
 		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel lbl = new JLabel("Promedio general: -", SwingConstants.CENTER);
-		lbl.setFont(new Font("Arial", Font.BOLD, 18));
-		p.add(lbl, BorderLayout.CENTER);
+		JLabel lblGeneral = new JLabel("Promedio general: -", SwingConstants.CENTER);
+		lblGeneral.setFont(new Font("Arial", Font.BOLD, 18));
 
-		JButton btnCalcular = new JButton("Calcular promedio");
-		p.add(btnCalcular, BorderLayout.SOUTH);
+		JLabel lblSemestre = new JLabel("Promedio último semestre: -", SwingConstants.CENTER);
+		lblSemestre.setFont(new Font("Arial", Font.BOLD, 18));
 
-		btnCalcular.addActionListener(e -> {
-			double prom = sistema.calcularPromedioGeneral(estudiante.getRut());
-			lbl.setText("Promedio general: " + prom);
+		JButton btn = new JButton("Calcular");
+
+		btn.addActionListener(e -> {
+			double pg = sistema.calcularPromedioGeneral(estudiante.getRut());
+			double ps = sistema.calcularPromedioPorSemestre(estudiante.getRut());
+			lblGeneral.setText("Promedio general: " + String.format("%.2f", pg));
+			lblSemestre.setText("Promedio último semestre: " + String.format("%.2f", ps));
 		});
 
+		p.add(lblGeneral);
+		p.add(lblSemestre);
+		p.add(btn);
 		return p;
 	}
 
@@ -195,22 +123,20 @@ public class MenuEstudianteFrame extends JFrame {
 
 		JTextArea area = new JTextArea();
 		area.setEditable(false);
-		p.add(new JScrollPane(area), BorderLayout.CENTER);
 
-		JButton btnVer = new JButton("Ver progreso en certificaciones");
-		p.add(btnVer, BorderLayout.SOUTH);
+		JButton btn = new JButton("Ver progreso");
 
-		btnVer.addActionListener(e -> {
-			String reporte = sistema.generarReporteProgresoEstudiante(estudiante.getRut());
-
-			if (reporte == null || reporte.isBlank()) {
-				area.setText("No hay certificaciones registradas para tu RUT.");
+		btn.addActionListener(e -> {
+			String rep = sistema.generarReporteProgresoEstudiante(estudiante.getRut());
+			if (rep == null || rep.isBlank()) {
+				area.setText("No hay certificaciones para este estudiante.");
 			} else {
-				area.setText(reporte);
+				area.setText(rep);
 			}
 		});
 
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
 		return p;
 	}
-
 }

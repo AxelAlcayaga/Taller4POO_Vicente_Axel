@@ -2,6 +2,7 @@ package presentacion;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 import dominio.Administrador;
 import dominio.Coordinador;
@@ -15,30 +16,28 @@ public class MenuAdminFrame extends JFrame {
 	private Administrador admin;
 	private ISistema sistema;
 
-	private JComboBox<String> comboUsuarios;
-	private JTextArea areaInfo;
-
 	public MenuAdminFrame(Administrador admin) {
 		super("AcademiCore - Administrador");
 		this.admin = admin;
 		this.sistema = Sistema.getInstancia();
 
-		setSize(600, 400);
+		setSize(650, 420);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		JTabbedPane tabs = new JTabbedPane();
 		tabs.addTab("Crear usuario", crearPanelCrear());
-		tabs.addTab("Modificar usuario", crearPanelModificar());
-		tabs.addTab("Eliminar usuario", crearPanelEliminarUsuario());
+		tabs.addTab("Eliminar usuario", crearPanelEliminar());
 		tabs.addTab("Restablecer contraseña", crearPanelReset());
+		tabs.addTab("Listar usuarios", crearPanelListar());
 
 		add(tabs);
 		setVisible(true);
 	}
 
 	private JPanel crearPanelCrear() {
-		JPanel p = new JPanel(new GridLayout(7, 2, 5, 5));
+		JPanel root = new JPanel(new BorderLayout(10, 10));
+		root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		String[] tipos = { "Estudiante", "Coordinador" };
 		JComboBox<String> cbTipo = new JComboBox<>(tipos);
@@ -50,183 +49,223 @@ public class MenuAdminFrame extends JFrame {
 		JTextField txtCarrera = new JTextField();
 		JTextField txtSemestre = new JTextField();
 		JTextField txtCorreo = new JTextField();
+
 		JTextField txtArea = new JTextField();
 
-		p.add(new JLabel("Tipo:"));
-		p.add(cbTipo);
-		p.add(new JLabel("Usuario:"));
-		p.add(txtUsuario);
-		p.add(new JLabel("Contraseña:"));
-		p.add(txtPass);
-		p.add(new JLabel("RUT (solo estudiante):"));
-		p.add(txtRut);
-		p.add(new JLabel("Carrera (solo estudiante):"));
-		p.add(txtCarrera);
-		p.add(new JLabel("Semestre (solo estudiante):"));
-		p.add(txtSemestre);
-		p.add(new JLabel("Correo (solo estudiante):"));
-		p.add(txtCorreo);
-		p.add(new JLabel("Área (solo coordinador):"));
-		p.add(txtArea);
+		JPanel panelComun = new JPanel(new GridLayout(3, 2, 8, 8));
+		panelComun.setBorder(BorderFactory.createTitledBorder("Datos de la cuenta"));
+		panelComun.add(new JLabel("Tipo:"));
+		panelComun.add(cbTipo);
+		panelComun.add(new JLabel("Usuario:"));
+		panelComun.add(txtUsuario);
+		panelComun.add(new JLabel("Contraseña:"));
+		panelComun.add(txtPass);
+
+		JPanel panelEst = new JPanel(new GridLayout(4, 2, 8, 8));
+		panelEst.setBorder(BorderFactory.createTitledBorder("Datos del estudiante"));
+		panelEst.add(new JLabel("RUT:"));
+		panelEst.add(txtRut);
+		panelEst.add(new JLabel("Carrera:"));
+		panelEst.add(txtCarrera);
+		panelEst.add(new JLabel("Semestre:"));
+		panelEst.add(txtSemestre);
+		panelEst.add(new JLabel("Correo:"));
+		panelEst.add(txtCorreo);
+
+		JPanel panelCoord = new JPanel(new GridLayout(1, 2, 8, 8));
+		panelCoord.setBorder(BorderFactory.createTitledBorder("Datos del coordinador"));
+		panelCoord.add(new JLabel("Área:"));
+		panelCoord.add(txtArea);
+
+		JPanel form = new JPanel();
+		form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+		form.add(panelComun);
+		form.add(Box.createVerticalStrut(10));
+		form.add(panelEst);
+		form.add(Box.createVerticalStrut(10));
+		form.add(panelCoord);
+
+		JScrollPane scroll = new JScrollPane(form);
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		scroll.getVerticalScrollBar().setUnitIncrement(16);
 
 		JButton btnCrear = new JButton("Crear");
-		p.add(new JLabel());
-		p.add(btnCrear);
+		JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		panelBoton.add(btnCrear);
+
+		Runnable refrescar = () -> {
+			boolean esEst = cbTipo.getSelectedItem().equals("Estudiante");
+
+			txtRut.setEnabled(esEst);
+			txtCarrera.setEnabled(esEst);
+			txtSemestre.setEnabled(esEst);
+			txtCorreo.setEnabled(esEst);
+
+			txtArea.setEnabled(!esEst);
+		};
+
+		cbTipo.addActionListener(e -> refrescar.run());
+		refrescar.run();
 
 		btnCrear.addActionListener(e -> {
-			String tipo = (String) cbTipo.getSelectedItem();
-			String usuario = txtUsuario.getText();
-			String pass = new String(txtPass.getPassword());
+			String tipo = cbTipo.getSelectedItem().toString();
+			String usuario = txtUsuario.getText().trim();
+			String pass = new String(txtPass.getPassword()).trim();
 
 			if (usuario.isEmpty() || pass.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Usuario y contraseña son obligatorios");
 				return;
 			}
 
-			if ("Estudiante".equals(tipo)) {
-				try {
-					String rut = txtRut.getText();
-					String carrera = txtCarrera.getText();
-					int semestre = Integer.parseInt(txtSemestre.getText());
-					String correo = txtCorreo.getText();
+			if (tipo.equals("Estudiante")) {
+				String rut = txtRut.getText().trim();
+				String carrera = txtCarrera.getText().trim();
+				String semTxt = txtSemestre.getText().trim();
+				String correo = txtCorreo.getText().trim();
 
-					Estudiante est = new Estudiante(usuario, pass, rut, carrera, semestre, correo);
-					sistema.agregarUsuario(est);
-					JOptionPane.showMessageDialog(this, "Estudiante creado correctamente");
-				} catch (NumberFormatException ex) {
-					JOptionPane.showMessageDialog(this, "Semestre debe ser numérico");
+				if (rut.isEmpty() || carrera.isEmpty() || semTxt.isEmpty() || correo.isEmpty()) {
+					JOptionPane.showMessageDialog(this, "Complete todos los datos del estudiante");
+					return;
 				}
+
+				int semestre;
+				try {
+					semestre = Integer.parseInt(semTxt);
+				} catch (NumberFormatException ex) {
+					JOptionPane.showMessageDialog(this, "Semestre debe ser un número");
+					return;
+				}
+
+				Estudiante est = new Estudiante(usuario, pass, rut, carrera, semestre, correo);
+				sistema.agregarUsuario(est);
+				JOptionPane.showMessageDialog(this, "Estudiante creado");
 			} else {
-				String area = txtArea.getText();
+				String area = txtArea.getText().trim();
+				if (area.isEmpty()) {
+					JOptionPane.showMessageDialog(this, "Área es obligatoria");
+					return;
+				}
+
 				Coordinador coord = new Coordinador(usuario, pass, area);
 				sistema.agregarUsuario(coord);
-				JOptionPane.showMessageDialog(this, "Coordinador creado correctamente");
+				JOptionPane.showMessageDialog(this, "Coordinador creado");
+			}
+
+			txtUsuario.setText("");
+			txtPass.setText("");
+			txtRut.setText("");
+			txtCarrera.setText("");
+			txtSemestre.setText("");
+			txtCorreo.setText("");
+			txtArea.setText("");
+		});
+
+		root.add(scroll, BorderLayout.CENTER);
+		root.add(panelBoton, BorderLayout.SOUTH);
+
+		return root;
+	}
+
+	private JPanel crearPanelEliminar() {
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+		JComboBox<String> cb = new JComboBox<>();
+		JTextArea area = new JTextArea();
+		area.setEditable(false);
+
+		JButton btnRefrescar = new JButton("Refrescar lista");
+		JButton btnEliminar = new JButton("Eliminar seleccionado");
+
+		JPanel arriba = new JPanel(new BorderLayout(10, 10));
+		arriba.add(cb, BorderLayout.CENTER);
+
+		JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		botones.add(btnRefrescar);
+		botones.add(btnEliminar);
+
+		p.add(arriba, BorderLayout.NORTH);
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(botones, BorderLayout.SOUTH);
+
+		Runnable cargar = () -> {
+			cb.removeAllItems();
+			ArrayList<Usuario> lista = sistema.listarUsuarios();
+			for (Usuario u : lista) {
+				cb.addItem(u.getNombreUsuario() + " (" + u.getRolUsuario() + ")");
+			}
+		};
+
+		btnRefrescar.addActionListener(e -> cargar.run());
+		cargar.run();
+
+		btnEliminar.addActionListener(e -> {
+			Object sel = cb.getSelectedItem();
+			if (sel == null)
+				return;
+
+			String nombreUsuario = sel.toString().split(" \\(")[0].trim();
+
+			int op = JOptionPane.showConfirmDialog(this, "¿Eliminar \"" + nombreUsuario + "\" y sus referencias?",
+					"Confirmar", JOptionPane.YES_NO_OPTION);
+
+			if (op != JOptionPane.YES_OPTION)
+				return;
+
+			boolean ok = sistema.eliminarUsuarioYReferencias(nombreUsuario);
+
+			if (ok) {
+				area.append("Eliminado: " + nombreUsuario + "\n");
+				cargar.run();
+			} else {
+				JOptionPane.showMessageDialog(this, "No se encontró el usuario");
 			}
 		});
 
-		cbTipo.addActionListener(e -> {
-			String tipo = (String) cbTipo.getSelectedItem();
-			boolean esEstudiante = "Estudiante".equals(tipo);
-
-			txtRut.setEnabled(esEstudiante);
-			txtCarrera.setEnabled(esEstudiante);
-			txtSemestre.setEnabled(esEstudiante);
-			txtCorreo.setEnabled(esEstudiante);
-
-			txtArea.setEnabled(!esEstudiante);
-		});
-
-		cbTipo.setSelectedItem("Estudiante");
-		txtArea.setEnabled(false);
-
 		return p;
 	}
-
-	private JPanel crearPanelModificar() {
-		JPanel p = new JPanel(new GridLayout(3, 2, 5, 5));
-
-		JTextField txtUsuario = new JTextField();
-		JPasswordField txtNuevaPass = new JPasswordField();
-
-		p.add(new JLabel("Usuario:"));
-		p.add(txtUsuario);
-		p.add(new JLabel("Nueva contraseña:"));
-		p.add(txtNuevaPass);
-
-		JButton btnCambiar = new JButton("Cambiar");
-		p.add(new JLabel());
-		p.add(btnCambiar);
-
-		btnCambiar.addActionListener(e -> {
-			String usuario = txtUsuario.getText();
-			String nuevaPass = new String(txtNuevaPass.getPassword());
-
-			sistema.cambiarContraseña(usuario, nuevaPass);
-			JOptionPane.showMessageDialog(this, "Contraseña modificada (si el usuario existe)");
-		});
-
-		return p;
-	}
-
 
 	private JPanel crearPanelReset() {
 		JPanel p = new JPanel(new GridLayout(2, 2, 5, 5));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JTextField txtUsuario = new JTextField();
+		JButton btn = new JButton("Restablecer a 1234");
+
 		p.add(new JLabel("Usuario:"));
 		p.add(txtUsuario);
-
-		JButton btnReset = new JButton("Restablecer a '1234'");
 		p.add(new JLabel());
-		p.add(btnReset);
+		p.add(btn);
 
-		btnReset.addActionListener(e -> {
-			String usuario = txtUsuario.getText();
-			sistema.cambiarContraseña(usuario, "1234");
-			JOptionPane.showMessageDialog(this, "Contraseña restablecida a '1234' (si el usuario existe).");
+		btn.addActionListener(e -> {
+			String user = txtUsuario.getText().trim();
+			if (user.isEmpty())
+				return;
+			sistema.cambiarContraseña(user, "1234");
+			JOptionPane.showMessageDialog(this, "Contraseña restablecida (si existe el usuario)");
 		});
 
 		return p;
 	}
 
-	private JPanel crearPanelEliminarUsuario() {
-		JPanel panel = new JPanel(new BorderLayout(10, 10));
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	private JPanel crearPanelListar() {
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JPanel arriba = new JPanel(new GridLayout(2, 1, 5, 5));
+		JTextArea area = new JTextArea();
+		area.setEditable(false);
 
-		arriba.add(new JLabel("Seleccionar usuario a eliminar:"));
+		JButton btn = new JButton("Listar usuarios");
 
-		comboUsuarios = new JComboBox<>();
+		btn.addActionListener(e -> {
+			area.setText("");
+			for (Usuario u : sistema.listarUsuarios()) {
+				area.append(u.getNombreUsuario() + " | " + u.getRolUsuario() + "\n");
+			}
+		});
 
-		for (Usuario u : sistema.listarUsuarios()) {
-			comboUsuarios.addItem(u.getNombreUsuario());
-		}
-
-		arriba.add(comboUsuarios);
-
-		panel.add(arriba, BorderLayout.NORTH);
-
-		areaInfo = new JTextArea();
-		areaInfo.setEditable(false);
-		panel.add(new JScrollPane(areaInfo), BorderLayout.CENTER);
-
-		JButton btnEliminar = new JButton("Eliminar usuario");
-		panel.add(btnEliminar, BorderLayout.SOUTH);
-
-		btnEliminar.addActionListener(e -> eliminarUsuarioSeleccionado());
-
-		return panel;
+		p.add(new JScrollPane(area), BorderLayout.CENTER);
+		p.add(btn, BorderLayout.SOUTH);
+		return p;
 	}
-
-	private void eliminarUsuarioSeleccionado() {
-		Object sel = comboUsuarios.getSelectedItem();
-		if (sel == null) {
-			JOptionPane.showMessageDialog(this, "Debe seleccionar un usuario.", "Mensaje", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-
-		String nombreUsuario = sel.toString();
-
-		int opcion = JOptionPane.showConfirmDialog(this,
-				"¿Seguro que desea eliminar al usuario \"" + nombreUsuario + "\" y todas sus referencias?",
-				"Confirmar eliminación", JOptionPane.YES_NO_OPTION);
-
-		if (opcion != JOptionPane.YES_OPTION) {
-			return;
-		}
-
-		boolean ok = sistema.eliminarUsuarioYReferencias(nombreUsuario);
-
-		if (ok) {
-			areaInfo.append("Usuario " + nombreUsuario + " eliminado.\n");
-			comboUsuarios.removeItem(nombreUsuario); // sacarlo del combo
-
-			JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente.", "Mensaje",
-					JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			JOptionPane.showMessageDialog(this, "No se encontró el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-
 }
